@@ -1,4 +1,4 @@
-module github.com/thepacketloss/mediatransportutil
+module github.com/livekit/mediatransportutil
 
 go 1.22.10
 
