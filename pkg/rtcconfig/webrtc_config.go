@@ -104,11 +104,7 @@ func NewWebRTCConfig(rtcConf *RTCConfig, development bool) (*WebRTCConfig, error
 				logger.Infow("no external IPs found, using node IP for NAT1To1Ips", "ip", rtcConf.NodeIP)
 
 				if rtcConf.InternalNodeIP != "" {
-					if rtcConf.UDPPort.Valid() {
-						s.SetNAT1To1IPs([]string{fmt.Sprintf("%s/%s:%d", rtcConf.NodeIP, rtcConf.InternalNodeIP, rtcConf.UDPPort.Start)}, natCandidateType)
-					} else {
-						s.SetNAT1To1IPs([]string{fmt.Sprintf("%s/%s", rtcConf.NodeIP, rtcConf.InternalNodeIP)}, natCandidateType)
-					}
+					s.SetNAT1To1IPs([]string{fmt.Sprintf("%s/%s", rtcConf.NodeIP, rtcConf.InternalNodeIP)}, natCandidateType)
 				} else {
 					s.SetNAT1To1IPs([]string{rtcConf.NodeIP}, natCandidateType)
 				}
@@ -122,11 +118,7 @@ func NewWebRTCConfig(rtcConf *RTCConfig, development bool) (*WebRTCConfig, error
 			logger.Infow("using internal and external IPs", "internal", rtcConf.InternalNodeIP, "external", rtcConf.NodeIP)
 
 			if rtcConf.InternalNodeIP != "" {
-				if rtcConf.UDPPort.Valid() {
-					s.SetNAT1To1IPs([]string{fmt.Sprintf("%s/%s:%d", rtcConf.NodeIP, rtcConf.InternalNodeIP, rtcConf.UDPPort.Start)}, natCandidateType)
-				} else {
-					s.SetNAT1To1IPs([]string{fmt.Sprintf("%s/%s", rtcConf.NodeIP, rtcConf.InternalNodeIP)}, natCandidateType)
-				}
+				s.SetNAT1To1IPs([]string{fmt.Sprintf("%s/%s", rtcConf.NodeIP, rtcConf.InternalNodeIP)}, natCandidateType)
 			} else {
 				s.SetNAT1To1IPs([]string{rtcConf.NodeIP}, natCandidateType)
 			}
