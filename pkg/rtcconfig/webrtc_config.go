@@ -85,9 +85,12 @@ func NewWebRTCConfig(rtcConf *RTCConfig, development bool) (*WebRTCConfig, error
 		s.SetICEMulticastDNSMode(ice.MulticastDNSModeDisabled)
 	}
 
-	var natCandidateType = webrtc.ICECandidateTypeHost
-	if rtcConf.ExternalIPOnly == false {
-		natCandidateType = webrtc.ICECandidateTypeSrflx
+	nodeIPs := []string{rtcConf.NodeIP}
+	if rtcConf.ExtraIPs != "" {
+		extraIps := strings.Split(rtcConf.ExtraIPs, ",")
+		for _, ip := range extraIps {
+			nodeIPs = append(nodeIPs, strings.TrimSpace(ip))
+		}
 	}
 
 	var nat1to1IPs []string
@@ -102,26 +105,14 @@ func NewWebRTCConfig(rtcConf *RTCConfig, development bool) (*WebRTCConfig, error
 			s.SetIPFilter(ipFilter)
 			if len(ips) == 0 {
 				logger.Infow("no external IPs found, using node IP for NAT1To1Ips", "ip", rtcConf.NodeIP)
-
-				if rtcConf.InternalNodeIP != "" {
-					s.SetNAT1To1IPs([]string{fmt.Sprintf("%s/%s", rtcConf.NodeIP, rtcConf.InternalNodeIP)}, natCandidateType)
-				} else {
-					s.SetNAT1To1IPs([]string{rtcConf.NodeIP}, natCandidateType)
-				}
+				s.SetNAT1To1IPs(nodeIPs, webrtc.ICECandidateTypeHost)
 			} else {
 				logger.Infow("using external IPs", "ips", ips)
-
-				s.SetNAT1To1IPs(ips, natCandidateType)
+				s.SetNAT1To1IPs(ips, webrtc.ICECandidateTypeHost)
 			}
 			nat1to1IPs = ips
 		} else {
-			logger.Infow("using internal and external IPs", "internal", rtcConf.InternalNodeIP, "external", rtcConf.NodeIP)
-
-			if rtcConf.InternalNodeIP != "" {
-				s.SetNAT1To1IPs([]string{fmt.Sprintf("%s/%s", rtcConf.NodeIP, rtcConf.InternalNodeIP)}, natCandidateType)
-			} else {
-				s.SetNAT1To1IPs([]string{rtcConf.NodeIP}, natCandidateType)
-			}
+			s.SetNAT1To1IPs(nodeIPs, webrtc.ICECandidateTypeHost)
 		}
 	}
 
