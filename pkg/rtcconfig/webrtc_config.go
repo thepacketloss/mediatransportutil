@@ -94,6 +94,8 @@ func NewWebRTCConfig(rtcConf *RTCConfig, development bool) (*WebRTCConfig, error
 			if err != nil {
 				return nil, err
 			}
+			//also add NodeIP to ips
+			ips = append(ips, rtcConf.NodeIP.PrimaryIP())
 			ipFilter = newFilter
 			s.SetIPFilter(ipFilter)
 			if len(ips) == 0 {
