@@ -94,8 +94,6 @@ func NewWebRTCConfig(rtcConf *RTCConfig, development bool) (*WebRTCConfig, error
 			if err != nil {
 				return nil, err
 			}
-			//also add NodeIP to ips
-			ips = append(ips, rtcConf.NodeIP.PrimaryIP())
 			ipFilter = newFilter
 			s.SetIPFilter(ipFilter)
 			if len(ips) == 0 {
@@ -332,7 +330,12 @@ func getNAT1to1IPsForConf(rtcConf *RTCConfig, ifFilter func(string) bool, ipFilt
 					logger.Infow("failed to get external ip", "local", localIP, "err", err)
 					return
 				}
+
+				if !rtcConf.NodeIP.IsEmpty() {
+					addrCh <- ipmapping{externalIP: rtcConf.NodeIP.PrimaryIP(), localIP: localIP}
+				}
 				addrCh <- ipmapping{externalIP: addr, localIP: localIP}
+
 				return
 			}
 			logger.Infow("failed to get external ip after all ports tried", "local", localIP, "ports", udpPorts)
