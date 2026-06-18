@@ -89,6 +89,7 @@ func NewWebRTCConfig(rtcConf *RTCConfig, development bool) (*WebRTCConfig, error
 	var nat1to1IPs []string
 	// force it to the node IPs that the user has set
 	if len(rtcConf.IpMappings) > 0 {
+		logger.Infow("using ip mappings ...", "ips", rtcConf.IpMappings)
 		if err := SetNAT1To1AddressRewriteRules(&s, rtcConf.IpMappings, rtcConf.AdvertiseInternalIP); err != nil {
 			return nil, err
 		}
