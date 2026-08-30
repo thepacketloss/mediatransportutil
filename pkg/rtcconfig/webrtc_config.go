@@ -102,8 +102,8 @@ func NewWebRTCConfig(rtcConf *RTCConfig, development bool) (*WebRTCConfig, error
 			ipFilter = newFilter
 			s.SetIPFilter(ipFilter)
 			if len(ips) == 0 {
-				logger.Infow("no external IPs found, using node IP for NAT1To1Ips", "ip", rtcConf.NodeIP)
-				if err := SetNAT1To1AddressRewriteRules(&s, rtcConf.NodeIP.ToStringSlice(), false); err != nil {
+				logger.Infow("no external IPs found, using node IP for NAT1To1Ips", "ip", rtcConf.NodeIP, "advertiseInternalIP", rtcConf.AdvertiseInternalIP)
+				if err := SetNAT1To1AddressRewriteRules(&s, rtcConf.NodeIP.ToStringSlice(), rtcConf.AdvertiseInternalIP); err != nil {
 					return nil, err
 				}
 			} else {
@@ -114,7 +114,8 @@ func NewWebRTCConfig(rtcConf *RTCConfig, development bool) (*WebRTCConfig, error
 			}
 			nat1to1IPs = ips
 		} else {
-			if err := SetNAT1To1AddressRewriteRules(&s, rtcConf.NodeIP.ToStringSlice(), false); err != nil {
+			logger.Infow("using explicit node IP for NAT1To1Ips", "ip", rtcConf.NodeIP, "advertiseInternalIP", rtcConf.AdvertiseInternalIP)
+			if err := SetNAT1To1AddressRewriteRules(&s, rtcConf.NodeIP.ToStringSlice(), rtcConf.AdvertiseInternalIP); err != nil {
 				return nil, err
 			}
 		}
@@ -255,6 +256,10 @@ func NewWebRTCConfig(rtcConf *RTCConfig, development bool) (*WebRTCConfig, error
 }
 
 func SetNAT1To1AddressRewriteRules(s *webrtc.SettingEngine, ips []string, includeInternal bool) error {
+	return s.SetICEAddressRewriteRules(nat1To1AddressRewriteRules(ips, includeInternal)...)
+}
+
+func nat1To1AddressRewriteRules(ips []string, includeInternal bool) []webrtc.ICEAddressRewriteRule {
 	rules := make([]webrtc.ICEAddressRewriteRule, 0, len(ips)+1)
 	catchAll := make([]string, 0, len(ips))
 
@@ -278,10 +283,11 @@ func SetNAT1To1AddressRewriteRules(s *webrtc.SettingEngine, ips []string, includ
 		rules = append(rules, webrtc.ICEAddressRewriteRule{
 			External:        catchAll,
 			AsCandidateType: webrtc.ICECandidateTypeHost,
+			Mode:            mode,
 		})
 	}
 
-	return s.SetICEAddressRewriteRules(rules...)
+	return rules
 }
 
 func iceServerForStunServers(servers []string) webrtc.ICEServer {
@@ -326,7 +332,7 @@ func getNAT1to1IPsForConf(rtcConf *RTCConfig, ifFilter func(string) bool, ipFilt
 		go func(localIP string) {
 			defer wg.Done()
 			for _, port := range udpPorts {
-				addr, err := getExternalIP(ctx, stunServers, &net.UDPAddr{IP: net.ParseIP(localIP), Port: port}, !rtcConf.SkipExternalIPValidation)
+				addr, err := getExternalIP(ctx, stunServers, &net.UDPAddr{IP: net.ParseIP(localIP), Port: port}, !rtcConf.SkipExternalIPValidation, "udp")
 				if err != nil {
 					if strings.Contains(err.Error(), "address already in use") {
 						logger.Infow("failed to get external ip, address already in use", "local", localIP, "port", port)
